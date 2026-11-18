@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora PJ x CLT — Equivalência Salarial e Impostos</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        },
+                        emerald: {
+                            50: '#ecfdf5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom subtle scrollbars and number input adjustments */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
+        }
+        .tab-active {
+            background-color: #4f46e5;
+            color: #ffffff;
+            box-shadow: 0 4px 14px 0 rgba(79, 70, 229, 0.35);
+        }
+        .tab-inactive {
+            background-color: #f1f5f9;
+            color: #475569;
+        }
+        .tab-inactive:hover {
+            background-color: #e2e8f0;
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border-b border-indigo-900/50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-semibold tracking-wide uppercase mb-2">
+                        <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        Simulador Tributário Brasileiro
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                        Calculadora <span class="text-indigo-400">PJ</span> vs <span class="text-emerald-400">CLT</span>
+                    </h1>
+                    <p class="text-slate-300 text-sm sm:text-base mt-1 max-w-2xl">
+                        Compare impostos reais (Simples Nacional, INSS, IRRF), benefícios, 13º, férias e FGTS para descobrir a equivalência salarial exata entre os dois regimes.
+                    </p>
+                </div>
+                <div class="flex items-center gap-2 self-start md:self-center">
+                    <button id="btnReset" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition border border-white/15">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        Restaurar Padrão
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+        <!-- Mode Switcher Tabs -->
+        <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-200/80 mb-6 sm:mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" role="tablist">
+                <button id="tabPjToClt" role="tab" aria-selected="true" onclick="setMode('PJ_TO_CLT')" class="tab-active flex items-center justify-center gap-3 py-3.5 px-4 rounded-xl text-sm sm:text-base font-semibold transition-all duration-200">
+                    <span class="flex items-center justify-center w-7 h-7 rounded-lg bg-white/20 text-xs font-bold">1</span>
+                    <span>Tenho proposta <strong class="underline decoration-indigo-300">PJ</strong> &rarr; Qual <strong class="underline decoration-emerald-300">CLT</strong> equivale?</span>
+                </button>
+                <button id="tabCltToPj" role="tab" aria-selected="false" onclick="setMode('CLT_TO_PJ')" class="tab-inactive flex items-center justify-center gap-3 py-3.5 px-4 rounded-xl text-sm sm:text-base font-semibold transition-all duration-200">
+                    <span class="flex items-center justify-center w-7 h-7 rounded-lg bg-slate-300/60 text-slate-700 text-xs font-bold">2</span>
+                    <span>Tenho salário <strong class="underline decoration-emerald-500">CLT</strong> &rarr; Quanto cobrar <strong class="underline decoration-indigo-500">PJ</strong>?</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Grid: Inputs (Left) & Results (Right) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+
+            <!-- LEFT COLUMN: INPUT PARAMETERS (5 cols on lg) -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- Primary Input Card (Dynamic based on Mode) -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/90 p-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 id="primaryInputTitle" class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                            Proposta PJ (Faturamento)
+                        </h2>
+                        <span id="primaryBadge" class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold">Entrada Principal</span>
+                    </div>
+
+                    <!-- Primary Salary Input -->
+                    <div class="mb-5">
+                        <label id="primaryInputLabel" for="mainSalaryInput" class="block text-sm font-medium text-slate-700 mb-1.5">
+                            Faturamento Mensal Bruto PJ (Nota Fiscal)
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500 font-semibold text-base">R$</span>
+                            <input type="text" id="mainSalaryInput" inputmode="numeric" value="12.000,00"
+                                class="w-full pl-12 pr-4 py-3.5 text-xl font-bold text-slate-900 bg-slate-50 border-2 border-indigo-200 rounded-xl focus:outline-none focus:border-indigo-600 focus:bg-white transition">
+                        </div>
+                        <!-- Quick Presets -->
+                        <div class="flex flex-wrap gap-1.5 mt-2.5">
+                            <button type="button" onclick="setMainSalary(5000)" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-600 transition">R$ 5.000</button>
+                            <button type="button" onclick="setMainSalary(8000)" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-600 transition">R$ 8.000</button>
+                            <button type="button" onclick="setMainSalary(12000)" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-600 transition">R$ 12.000</button>
+                            <button type="button" onclick="setMainSalary(18000)" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-600 transition">R$ 18.000</button>
+                            <button type="button" onclick="setMainSalary(25000)" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-600 transition">R$ 25.000</button>
+                        </div>
+                    </div>
+
+                    <!-- PJ Tax & Pró-Labore Section -->
+                    <div class="border-t border-slate-100 pt-5 space-y-4">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            Configurações da Empresa (PJ - Simples Nacional)
+                        </h3>
+
+                        <!-- Simples Nacional Regime -->
+                        <div>
+                            <label for="pjRegime" class="block text-sm font-medium text-slate-700 mb-1">Enquadramento Tributário (DAS)</label>
+                            <select id="pjRegime" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-indigo-500">
+                                <option value="ANEXO_III_FATOR_R" selected>Anexo III (Com Fator R &ge; 28% — Inicial 6,0%)</option>
+                                <option value="ANEXO_III_PURO">Anexo III Puro (Sem exigência Fator R — Inicial 6,0%)</option>
+                                <option value="ANEXO_V">Anexo V (Sem Fator R — Inicial 15,5%)</option>
+                                <option value="CUSTOM">Alíquota Efetiva Personalizada (%)</option>
+                            </select>
+                        </div>
+
+                        <!-- Custom Tax Rate (Hidden unless CUSTOM selected) -->
+                        <div id="customTaxContainer" class="hidden">
+                            <label for="customTaxRate" class="block text-sm font-medium text-slate-700 mb-1">Alíquota Efetiva do Simples Nacional (%)</label>
+                            <div class="relative">
+                                <input type="number" id="customTaxRate" step="0.1" min="0" max="35" value="8.5"
+                                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-indigo-500">
+                                <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-500 font-semibold text-sm">%</span>
+                            </div>
+                        </div>
+
+                        <!-- Pró-Labore Input -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="proLaboreInput" class="block text-sm font-medium text-slate-700">Pró-labore Mensal (Base INSS/IRRF)</label>
+                                <span id="proLaboreHint" class="text-[11px] font-medium text-indigo-600">28% p/ Fator R</span>
+                            </div>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 font-medium text-sm">R$</span>
+                                <input type="text" id="proLaboreInput" inputmode="numeric" value="3.360,00"
+                                    class="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 mt-2">
+                                <button type="button" onclick="setProLaboreMinimo()" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition">
+                                    1 Salário Mínimo (R$ 1.518,00)
+                                </button>
+                                <button type="button" onclick="setProLaboreFatorR()" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition">
+                                    28% do Faturamento (Fator R)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- PJ Fixed Monthly Costs -->
+                        <div>
+                            <label for="pjCostsInput" class="block text-sm font-medium text-slate-700 mb-1">
+                                Custos Mensais PJ (Contador, Certificado, Taxas)
+                            </label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 font-medium text-sm">R$</span>
+                                <input type="text" id="pjCostsInput" inputmode="numeric" value="350,00"
+                                    class="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CLT Benefits & Equivalency Rules Card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/90 p-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                            Benefícios e Premissas CLT
+                        </h2>
+                        <span class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold">Pacote CLT</span>
+                    </div>
+
+                    <p class="text-xs text-slate-500 mb-4">
+                        Informe os benefícios que a vaga CLT oferece (ou que você precisa custear por fora no PJ) para uma comparação justa.
+                    </p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-4">
+                        <!-- VR / VA -->
+                        <div>
+                            <label for="cltVrInput" class="block text-xs font-semibold text-slate-700 mb-1">Vale Refeição / Alim. (mês)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs font-semibold">R$</span>
+                                <input type="text" id="cltVrInput" inputmode="numeric" value="900,00"
+                                    class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-emerald-500">
+                            </div>
+                        </div>
+
+                        <!-- Plano de Saúde -->
+                        <div>
+                            <label for="cltHealthInput" class="block text-xs font-semibold text-slate-700 mb-1">Plano de Saúde/Odonto (mês)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs font-semibold">R$</span>
+                                <input type="text" id="cltHealthInput" inputmode="numeric" value="550,00"
+                                    class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-emerald-500">
+                            </div>
+                        </div>
+
+                        <!-- Auxílio Home Office / VT / Outros -->
+                        <div>
+                            <label for="cltOtherBenefitsInput" class="block text-xs font-semibold text-slate-700 mb-1">Outros Benefícios / Auxílio (mês)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs font-semibold">R$</span>
+                                <input type="text" id="cltOtherBenefitsInput" inputmode="numeric" value="200,00"
+                                    class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-emerald-500">
+                            </div>
+                        </div>
+
+                        <!-- PLR / Bônus Anual -->
+                        <div>
+                            <label for="cltPlrInput" class="block text-xs font-semibold text-slate-700 mb-1">PLR / Bônus Líquido (anual)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs font-semibold">R$</span>
+                                <input type="text" id="cltPlrInput" inputmode="numeric" value="0,00"
+                                    class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-emerald-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dependents -->
+                    <div class="mb-4">
+                        <label for="dependentsInput" class="block text-xs font-semibold text-slate-700 mb-1">Número de Dependentes (Dedução IRRF)</label>
+                        <select id="dependentsInput" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-emerald-500">
+                            <option value="0" selected>0 dependentes</option>
+                            <option value="1">1 dependente (R$ 189,59/mês)</option>
+                            <option value="2">2 dependentes (R$ 379,18/mês)</option>
+                            <option value="3">3 dependentes (R$ 568,77/mês)</option>
+                            <option value="4">4 ou mais dependentes</option>
+                        </select>
+                    </div>
+
+                    <!-- Toggles for Annualized CLT Rights -->
+                    <div class="border-t border-slate-100 pt-4 space-y-3">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" id="include13thVacation" checked class="mt-1 w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
+                            <div class="text-xs">
+                                <span class="font-semibold text-slate-800 block">Incluir 13º Salário e Adicional de 1/3 de Férias</span>
+                                <span class="text-slate-500">Dilui o 13º líquido e o terço constitucional de férias nos 12 meses do ano.</span>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" id="includeFgts" checked class="mt-1 w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
+                            <div class="text-xs">
+                                <span class="font-semibold text-slate-800 block">Considerar FGTS (8% mensal) como patrimônio</span>
+                                <span class="text-slate-500">Soma o depósito mensal de 8% do FGTS ao pacote total do trabalhador CLT.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: RESULTS & VISUALIZATIONS (7 cols on lg) -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- Hero Equivalence Result Banner -->
+                <div class="bg-gradient-to-br from-indigo-900 via-slate-900 to-emerald-950 rounded-2xl p-6 sm:p-7 text-white shadow-xl border border-indigo-500/30 relative overflow-hidden">
+                    <!-- Decorative glow -->
+                    <div class="absolute -top-24 -right-24 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <span id="resultHeroTag" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-semibold">
+                                Resultado da Equivalência
+                            </span>
+                            <span id="multiplierBadge" class="px-3 py-1 rounded-full bg-white/10 text-indigo-200 text-xs font-semibold">
+                                Fator PJ/CLT: 1,35x
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                            <!-- Left: Input Reference -->
+                            <div class="bg-white/5 border border-white/10 rounded-xl p-4">
+                                <p id="heroSourceLabel" class="text-xs uppercase tracking-wider text-indigo-300 font-semibold mb-1">Proposta PJ Informada</p>
+                                <p id="heroSourceValue" class="text-2xl sm:text-3xl font-bold text-white">R$ 12.000,00</p>
+                                <p id="heroSourceSub" class="text-xs text-slate-300 mt-1.5">Líquido médio mensal: <strong class="text-white">R$ 10.480,00</strong></p>
+                            </div>
+
+                            <!-- Right: Equivalent Target -->
+                            <div class="bg-gradient-to-r from-emerald-500/20 to-teal-500/10 border border-emerald-400/40 rounded-xl p-4">
+                                <p id="heroTargetLabel" class="text-xs uppercase tracking-wider text-emerald-300 font-semibold mb-1">Salário Bruto CLT Equivalente</p>
+                                <p id="heroTargetValue" class="text-3xl sm:text-4xl font-extrabold text-emerald-400 tracking-tight">R$ 8.850,00</p>
+                                <p id="heroTargetSub" class="text-xs text-emerald-100/90 mt-1.5">Para empatar o pacote líquido anualizado</p>
+                            </div>
+                        </div>
+
+                        <!-- Quick Insight Summary -->
+                        <div id="heroInsightBox" class="mt-5 pt-4 border-t border-white/10 text-xs sm:text-sm text-slate-200 flex items-start gap-2.5">
+                            <svg class="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span id="heroInsightText">Carregando análise comparativa...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3 Key Metrics Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Card 1: Total Taxes PJ -->
+                    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-slate-500 uppercase">Impostos Totais PJ</span>
+                            <span id="pjEffectiveTaxBadge" class="text-xs font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">9,8%</span>
+                        </div>
+                        <p id="cardPjTaxes" class="text-xl sm:text-2xl font-bold text-slate-900">R$ 1.170,00</p>
+                        <p class="text-xs text-slate-500 mt-1">DAS + INSS + IRRF sobre pró-labore</p>
+                    </div>
+
+                    <!-- Card 2: Total Deductions CLT -->
+                    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-slate-500 uppercase">Descontos CLT</span>
+                            <span id="cltEffectiveTaxBadge" class="text-xs font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700">21,5%</span>
+                        </div>
+                        <p id="cardCltTaxes" class="text-xl sm:text-2xl font-bold text-slate-900">R$ 1.900,00</p>
+                        <p class="text-xs text-slate-500 mt-1">INSS + IRRF retidos na folha</p>
+                    </div>
+
+                    <!-- Card 3: Net Monthly Equivalent -->
+                    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-slate-500 uppercase">Pacote Líquido/Mês</span>
+                            <span class="text-xs font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">Equiparado</span>
+                        </div>
+                        <p id="cardNetMonthly" class="text-xl sm:text-2xl font-bold text-emerald-600">R$ 10.480,00</p>
+                        <p class="text-xs text-slate-500 mt-1">Média mensal real (c/ benefícios)</p>
+                    </div>
+                </div>
+
+                <!-- Visual Breakdown Chart (SVG Stacked Horizontal Bar Comparison) -->
+                <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Para onde vai cada real? (Composição Mensal)</h3>
+                            <p class="text-xs text-slate-500">Comparação visual entre valor líquido no bolso, benefícios/direitos e impostos pagos.</p>
+                        </div>
+                        <!-- Legend -->
+                        <div class="flex flex-wrap items-center gap-3 text-xs font-medium">
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-emerald-500"></span> Líquido no Bolso</span>
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-sky-500"></span> Benefícios / FGTS / 13º</span>
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-rose-500"></span> Impostos & Custos</span>
+                        </div>
+                    </div>
+
+                    <div id="visualChartContainer" class="space-y-5 mt-4">
+                        <!-- PJ Bar -->
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1.5">
+                                <span class="text-indigo-900">Regime PJ (Faturamento: <span id="chartPjTotalLabel">R$ 12.000,00</span>)</span>
+                                <span class="text-emerald-700" id="chartPjNetPct">87,3% líquido</span>
+                            </div>
+                            <div class="w-full h-7 bg-slate-100 rounded-xl overflow-hidden flex shadow-inner">
+                                <div id="barPjNet" class="bg-emerald-500 h-full transition-all duration-500 flex items-center justify-center text-[11px] font-bold text-white" style="width: 87%"></div>
+                                <div id="barPjTax" class="bg-rose-500 h-full transition-all duration-500 flex items-center justify-center text-[11px] font-bold text-white" style="width: 13%"></div>
+                            </div>
+                        </div>
+
+                        <!-- CLT Bar -->
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1.5">
+                                <span class="text-emerald-900">Regime CLT (Pacote Bruto Total: <span id="chartCltTotalLabel">R$ 12.380,00</span>)</span>
+                                <span class="text-emerald-700" id="chartCltNetPct">84,6% líquido + benef.</span>
+                            </div>
+                            <div class="w-full h-7 bg-slate-100 rounded-xl overflow-hidden flex shadow-inner">
+                                <div id="barCltNet" class="bg-emerald-500 h-full transition-all duration-500 flex items-center justify-center text-[11px] font-bold text-white" style="width: 55%"></div>
+                                <div id="barCltBenefits" class="bg-sky-500 h-full transition-all duration-500 flex items-center justify-center text-[11px] font-bold text-white" style="width: 30%"></div>
+                                <div id="barCltTax" class="bg-rose-500 h-full transition-all duration-500 flex items-center justify-center text-[11px] font-bold text-white" style="width: 15%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Side-by-Side Comparison Table -->
+                <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
+                    <div class="p-5 sm:px-6 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Detalhamento Completo (Demonstrativo Mensal e Anual)</h3>
+                            <p class="text-xs text-slate-500">Todos os tributos, deduções e direitos calculados linha a linha.</p>
+                        </div>
+                        <button type="button" onclick="copySummaryToClipboard()" id="btnCopySummary" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            Copiar Resumo
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50/80 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
+                                    <th class="py-3.5 px-4 sm:px-6">Descrição / Rubrica</th>
+                                    <th class="py-3.5 px-4 text-right text-indigo-700">Modalidade PJ</th>
+                                    <th class="py-3.5 px-4 sm:px-6 text-right text-emerald-700">Modalidade CLT</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-sm">
+                                <!-- Gross -->
+                                <tr class="bg-slate-50/40 font-semibold">
+                                    <td class="py-3 px-4 sm:px-6 text-slate-800">Remuneração Bruta Mensal (NF / Salário Base)</td>
+                                    <td id="tblPjGross" class="py-3 px-4 text-right text-indigo-900">R$ 0,00</td>
+                                    <td id="tblCltGross" class="py-3 px-4 sm:px-6 text-right text-emerald-900">R$ 0,00</td>
+                                </tr>
+
+                                <!-- Simples Nacional (DAS) -->
+                                <tr>
+                                    <td class="py-2.5 px-4 sm:px-6 text-slate-600">
+                                        Imposto Simples Nacional (DAS)
+                                        <span id="tblPjDasRate" class="block text-[11px] text-slate-400">Alíquota efetiva: 6,00%</span>
+                                    </td>
+                                    <td id="tblPjDas" class="py-2.5 px-4 text-right text-rose-600 font-medium">- R$ 0,00</td>
+                                    <td class="py-2.5 px-4 sm:px-6 text-right text-slate-400">—</td>
+                                </tr>
+
+                                <!-- INSS -->
+                                <tr>
+                                    <td class="py-2.5 px-4 sm:px-6 text-slate-600">
+                                        INSS (Previdência Social)
+                                        <span class="block text-[11px] text-slate-400">PJ: 11% s/ Pró-labore | CLT: Tabela progressiva</span>
+                                    </td>
+                                    <td id="tblPjInss" class="py-2.5 px-4 text-right text-rose-600 font-medium">- R$ 0,00</td>
+                                    <td id="tblCltInss" class="py-2.5 px-4 sm:px-6 text-right text-rose-600 font-medium">- R$ 0,00</td>
+                                </tr>
+
+                                <!-- IRRF -->
+                                <tr>
+                                    <td class="py-2.5 px-4 sm:px-6 text-slate-600">
+                                        IRRF (Imposto de Renda Retido na Fonte)
+                                        <span class="block text-[11px] text-slate-400">Considera desconto simplificado ou deduções legais</span>
+                                    </td>
+                                    <td id="tblPjIrrf" class="py-2.5 px-4 text-right text-rose-600 font-medium">- R$ 0,00</td>
+                                    <td id="tblCltIrrf" class="py-2.5 px-4 sm:px-6 text-right text-rose-600 font-medium">- R$ 0,00</td>
+                                </tr>
+
+                                <!-- Contador / Custos PJ -->
+                                <tr>
+                                    <td class="py-2.5 px-4 sm:px-6 text-slate-600">Contabilidade e Taxas Administrativas PJ</td>
+                                    <td id="tblPjCosts" class="py-2.5 px-4 text-right text-rose-600 font-medium">- R$ 0,00</td>
+                                    <td class="py-2.5 px-4 sm:px-6 text-right text-slate-400">—</td>
+                                </tr>
+
+                                <!-- Salário / Retirada Líquida Mensal Direta -->
+                                <tr class="bg-slate-50/70 font-semibold">
+                                    <td class="py-3 px-4 sm:px-6 text-slate-800">
+                                        Líquido Mensal Direto em Conta
+                                        <span class="block text-[11px] font-normal text-slate-500">PJ: Pró-labore líq. + Lucros isentos | CLT: Holerite líq.</span>
+                                    </td>
+                                    <td id="tblPjDirectNet" class="py-3 px-4 text-right text-slate-900">R$ 0,00</td>
+                                    <td id="tblCltDirectNet" class="py-3 px-4 sm:px-6 text-right text-slate-900">R$ 0,00</td>
+                                </tr>
+
+                                <!-- Benefícios Mensais -->
+                                <tr>
+                                    <td class="py-2.5 px-4 sm:px-6 text-slate-600">Benefícios Mensais (VR/VA + Saúde + Auxílios)</td>
+                                    <td class="py-2.5 px-4 text-right text-slate-400">R$ 0,00</td>
+                                    <td id="tblCltBenefits" class="py-2.5 px-4 sm:px-6 text-right text-emerald-600 font-medium">+ R$ 0,00</td>
+                                </tr>
+
+                                <!-- 13º e Férias (Média Mensal) -->
+                                <tr>
+                                    <td class="py-2.5 px-4 sm:px-6 text-slate-600">13º Salário Líquido + 1/3 Férias (Média/mês)</td>
+                                    <td class="py-2.5 px-4 text-right text-slate-400">R$ 0,00</td>
+                                    <td id="tblClt13thVac" class="py-2.5 px-4 sm:px-6 text-right text-emerald-600 font-medium">+ R$ 0,00</td>
+                                </tr>
+
+                                <!-- FGTS + PLR -->
+                                <tr>
+                                    <td class="py-2.5 px-4 sm:px-6 text-slate-600">FGTS (8%/mês) + PLR Anual (Média/mês)</td>
+                                    <td class="py-2.5 px-4 text-right text-slate-400">R$ 0,00</td>
+                                    <td id="tblCltFgtsPlr" class="py-2.5 px-4 sm:px-6 text-right text-emerald-600 font-medium">+ R$ 0,00</td>
+                                </tr>
+
+                                <!-- TOTAL EQUIVALENTE MENSAL -->
+                                <tr class="bg-emerald-50/70 border-t-2 border-emerald-200 font-bold text-base">
+                                    <td class="py-4 px-4 sm:px-6 text-slate-900">Ganho Líquido Mensal Equivalente</td>
+                                    <td id="tblPjFinalMonthly" class="py-4 px-4 text-right text-indigo-700">R$ 0,00</td>
+                                    <td id="tblCltFinalMonthly" class="py-4 px-4 sm:px-6 text-right text-emerald-700">R$ 0,00</td>
+                                </tr>
+
+                                <!-- TOTAL ANUAL -->
+                                <tr class="bg-slate-900 text-white font-bold">
+                                    <td class="py-3.5 px-4 sm:px-6 text-xs sm:text-sm uppercase tracking-wide text-slate-300">Pacote Líquido Total Anual (12 meses)</td>
+                                    <td id="tblPjFinalYearly" class="py-3.5 px-4 text-right text-indigo-300">R$ 0,00</td>
+                                    <td id="tblCltFinalYearly" class="py-3.5 px-4 sm:px-6 text-right text-emerald-400">R$ 0,00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Methodology & Tax Rules Disclaimer Accordion -->
+                <div class="bg-white rounded-2xl border border-slate-200/90 p-5 text-xs text-slate-600 space-y-2">
+                    <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Premissas Fiscais Utilizadas no Cálculo
+                    </h4>
+                    <ul class="list-disc pl-5 space-y-1 text-slate-500">
+                        <li><strong>Simples Nacional (Anexo III e V):</strong> Aplica a alíquota efetiva progressiva conforme o faturamento anualizado (RBT12 = Faturamento &times; 12). Para o Anexo III com Fator R, recomenda-se pró-labore igual ou superior a 28% do faturamento bruto.</li>
+                        <li><strong>INSS (2025/2026):</strong> Na CLT, aplica-se a tabela progressiva (7,5% a 14%) respeitando o teto previdenciário (R$ 8.157,41). No PJ, incide 11% sobre o valor do pró-labore (limitado ao teto).</li>
+                        <li><strong>IRRF:</strong> Calcula automaticamente o cenário mais vantajoso para o contribuinte entre as deduções legais (INSS + dependentes) e o desconto simplificado mensal vigente, respeitando a faixa de isenção ampliada.</li>
+                        <li><strong>Equivalência Anualizada:</strong> O algoritmo utiliza busca numérica de alta precisão para encontrar o salário exato em que o <em>Pacote Líquido Anual</em> da CLT (salários + 13º + 1/3 férias + benefícios + FGTS) se iguala ao <em>Lucro Líquido Anual</em> do PJ.</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification for Copy / Actions -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg border border-slate-700 flex items-center gap-2.5 text-sm font-medium">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            <span id="toastMessage">Resumo copiado para a área de transferência!</span>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+            <p>Calculadora PJ x CLT &bull; Ferramenta educativa de planejamento financeiro e comparação tributária.</p>
+            <p>Consulte sempre um contador habilitado para enquadramento específico da sua atividade (CNAE).</p>
+        </div>
+    </footer>
+
+    <!-- Application Logic -->
+    <script>
+        /**
+         * CONSTANTES TRIBUTÁRIAS BRASILEIRAS (Referência Vigente 2025/2026)
+         */
+        const TAX_CONSTANTS = {
+            SALARIO_MINIMO: 1518.00,
+            TETO_INSS: 8157.41,
+            DEDUCAO_DEPENDENTE_IRRF: 189.59,
+            DESCONTO_SIMPLIFICADO_IRRF: 607.20, // Desconto simplificado mensal vigente
+            // Faixas INSS CLT (Progressiva)
+            FAIXAS_INSS_CLT: [
+                { limite: 1518.00, aliquota: 0.075 },
+                { limite: 2793.88, aliquota: 0.09 },
+                { limite: 4190.83, aliquota: 0.12 },
+                { limite: 8157.41, aliquota: 0.14 }
+            ],
+            // Tabela Progressiva IRRF Mensal
+            FAIXAS_IRRF: [
+                { limite: 2428.80, aliquota: 0.00, deducao: 0.00 },
+                { limite: 2826.65, aliquota: 0.075, deducao: 182.16 },
+                { limite: 3751.05, aliquota: 0.15, deducao: 394.16 },
+                { limite: 4664.68, aliquota: 0.225, deducao: 675.49 },
+                { limite: Infinity, aliquota: 0.275, deducao: 908.73 }
+            ],
+            // Simples Nacional Anexo III (Faturamento 12 meses)
+            SIMPLES_ANEXO_III: [
+                { limite: 180000.00, aliquota: 0.06, deducao: 0.00 },
+                { limite: 360000.00, aliquota: 0.112, deducao: 9360.00 },
+                { limite: 720000.00, aliquota: 0.135, deducao: 17640.00 },
+                { limite: 1800000.00, aliquota: 0.16, deducao: 35640.00 },
+                { limite: 3600000.00, aliquota: 0.21, deducao: 125640.00 },
+                { limite: 4800000.00, aliquota: 0.33, deducao: 648000.00 }
+            ],
+            // Simples Nacional Anexo V (Faturamento 12 meses)
+            SIMPLES_ANEXO_V: [
+                { limite: 180000.00, aliquota: 0.155, deducao: 0.00 },
+                { limite: 360000.00, aliquota: 0.18, deducao: 4500.00 },
+                { limite: 720000.00, aliquota: 0.195, deducao: 9900.00 },
+                { limite: 1800000.00, aliquota: 0.205, deducao: 17100.00 },
+                { limite: 3600000.00, aliquota: 0.23, deducao: 62100.00 },
+                { limite: 4800000.00, aliquota: 0.305, deducao: 540000.00 }
+            ]
+        };
+
+        /**
+         * ESTADO GLOBAL DA APLICAÇÃO
+         */
+        let appState = {
+            mode: 'PJ_TO_CLT', // 'PJ_TO_CLT' ou 'CLT_TO_PJ'
+            mainSalary: 12000.00,
+            pjRegime: 'ANEXO_III_FATOR_R',
+            customTaxRate: 8.5,
+            proLabore: 3360.00,
+            proLaboreMode: 'FATOR_R', // 'FATOR_R', 'MINIMO', 'MANUAL'
+            pjCosts: 350.00,
+            cltVr: 900.00,
+            cltHealth: 550.00,
+            cltOtherBenefits: 200.00,
+            cltPlr: 0.00,
+            dependents: 0,
+            include13thVacation: true,
+            includeFgts: true,
+            lastCalculation: null
+        };
+
+        /**
+         * UTILITÁRIOS DE FORMATAÇÃO E PARSING MONETÁRIO (BRL)
+         */
+        function formatBRL(value) {
+            if (isNaN(value) || value === null) return 'R$ 0,00';
+            return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function formatNumberInput(value) {
+            if (isNaN(value) || value === null) return '0,00';
+            return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function parseCurrencyInput(str) {
+            if (!str) return 0;
+            const cleaned = str.toString().replace(/[^\d]/g, '');
+            if (!cleaned) return 0;
+            return parseFloat(cleaned) / 100;
+        }
+
+        function attachCurrencyMask(inputElement, onValueChange) {
+            inputElement.addEventListener('input', function (e) {
+                const numericValue = parseCurrencyInput(e.target.value);
+                e.target.value = formatNumberInput(numericValue);
+                onValueChange(numericValue);
+            });
+        }
+
+        /**
+         * FUNÇÕES DE CÁLCULO TRIBUTÁRIO
+         */
+
+        // 1. Cálculo de INSS Progressivo (CLT)
+        function calculateCltInss(grossSalary) {
+            if (grossSalary <= 0) return 0;
+            let totalInss = 0;
+            let previousLimit = 0;
+
+            for (const faixa of TAX_CONSTANTS.FAIXAS_INSS_CLT) {
+                if (grossSalary > previousLimit) {
+                    const taxableSlice = Math.min(grossSalary, faixa.limite) - previousLimit;
+                    totalInss += taxableSlice * faixa.aliquota;
+                    previousLimit = faixa.limite;
+                } else {
+                    break;
+                }
+            }
+            return Math.round(totalInss * 100) / 100;
+        }
+
+        // 2. Cálculo de IRRF Mensal (Considera o menor imposto entre Dedução Legal vs Simplificada)
+        function calculateIrrf(grossTaxable, inssPaid, dependentsCount) {
+            if (grossTaxable <= 0) return 0;
+
+            // Cenário A: Deduções Legais (INSS + Dependentes)
+            const legalDeductions = inssPaid + (dependentsCount * TAX_CONSTANTS.DEDUCAO_DEPENDENTE_IRRF);
+            const baseLegal = Math.max(0, grossTaxable - legalDeductions);
+
+            // Cenário B: Desconto Simplificado Mensal
+            const baseSimplificada = Math.max(0, grossTaxable - TAX_CONSTANTS.DESCONTO_SIMPLIFICADO_IRRF);
+
+            // Usa a menor base de cálculo (mais benéfica ao contribuinte)
+            const baseCalculo = Math.min(baseLegal, baseSimplificada);
+
+            for (const faixa of TAX_CONSTANTS.FAIXAS_IRRF) {
+                if (baseCalculo <= faixa.limite) {
+                    const tax = (baseCalculo * faixa.aliquota) - faixa.deducao;
+                    return Math.max(0, Math.round(tax * 100) / 100);
+                }
+            }
+            return 0;
+        }
+
+        // 3. Alíquota Efetiva Simples Nacional
+        function getSimplesEffectiveRate(monthlyRevenue, regime, customRate) {
+            if (regime === 'CUSTOM') {
+                return Math.max(0, customRate) / 100;
+            }
+            if (monthlyRevenue <= 0) return 0.06;
+
+            const rbt12 = monthlyRevenue * 12;
+            const table = (regime === 'ANEXO_V') ? TAX_CONSTANTS.SIMPLES_ANEXO_V : TAX_CONSTANTS.SIMPLES_ANEXO_III;
+
+            for (const faixa of table) {
+                if (rbt12 <= faixa.limite) {
+                    const effectiveRate = ((rbt12 * faixa.aliquota) - faixa.deducao) / rbt12;
+                    return Math.max(0, effectiveRate);
+                }
+            }
+            // Acima de 4.8M (última faixa)
+            const last = table[table.length - 1];
+            return ((rbt12 * last.aliquota) - last.deducao) / rbt12;
+        }
+
+        // 4. Simulação Completa PJ
+        function calculatePjDetails(monthlyRevenue, state) {
+            // Determina pró-labore
+            let proLabore = state.proLabore;
+            if (state.proLaboreMode === 'MINIMO') {
+                proLabore = TAX_CONSTANTS.SALARIO_MINIMO;
+            } else if (state.proLaboreMode === 'FATOR_R') {
+                proLabore = Math.max(TAX_CONSTANTS.SALARIO_MINIMO, monthlyRevenue * 0.28);
+            }
+            // Garante que pró-labore não ultrapasse faturamento
+            proLabore = Math.min(monthlyRevenue, proLabore);
+
+            // DAS Simples Nacional
+            const dasRate = getSimplesEffectiveRate(monthlyRevenue, state.pjRegime, state.customTaxRate);
+            const dasTax = monthlyRevenue * dasRate;
+
+            // INSS sobre Pró-labore (11% limitado ao teto)
+            const inssBase = Math.min(proLabore, TAX_CONSTANTS.TETO_INSS);
+            const inssTax = inssBase * 0.11;
+
+            // IRRF sobre Pró-labore
+            const irrfTax = calculateIrrf(proLabore, inssTax, state.dependents);
+
+            // Custos fixos (Contador, etc.)
+            const costs = state.pjCosts;
+
+            // Totais
+            const totalTaxes = dasTax + inssTax + irrfTax;
+            const totalDeductions = totalTaxes + costs;
+            const netMonthly = Math.max(0, monthlyRevenue - totalDeductions);
+            const netYearly = netMonthly * 12;
+
+            return {
+                grossMonthly: monthlyRevenue,
+                proLabore,
+                dasRate,
+                dasTax,
+                inssTax,
+                irrfTax,
+                costs,
+                totalTaxes,
+                totalDeductions,
+                netMonthly,
+                netYearly,
+                effectiveTaxPercent: monthlyRevenue > 0 ? (totalTaxes / monthlyRevenue) * 100 : 0
+            };
+        }
+
+        // 5. Simulação Completa CLT
+        function calculateCltDetails(grossSalary, state) {
+            const inssTax = calculateCltInss(grossSalary);
+            const irrfTax = calculateIrrf(grossSalary, inssTax, state.dependents);
+            const directNetMonthly = Math.max(0, grossSalary - inssTax - irrfTax);
+
+            // Benefícios mensais isentos
+            const monthlyBenefits = state.cltVr + state.cltHealth + state.cltOtherBenefits;
+
+            // 13º Salário líquido (mesma tributação de um salário mensal)
+            const net13th = state.include13thVacation ? directNetMonthly : 0;
+
+            // Adicional de 1/3 de Férias (tributado de forma aproximada pela alíquota marginal ou proporcional)
+            let netVacationBonus = 0;
+            if (state.include13thVacation && grossSalary > 0) {
+                const grossVacationTotal = grossSalary * (4 / 3);
+                const inssVac = calculateCltInss(grossVacationTotal);
+                const irrfVac = calculateIrrf(grossVacationTotal, inssVac, state.dependents);
+                const netVacTotal = grossVacationTotal - inssVac - irrfVac;
+                // O ganho extra líquido das férias é a diferença para o salário normal
+                netVacationBonus = Math.max(0, netVacTotal - directNetMonthly);
+            }
+
+            // Média mensal do 13º + 1/3 Férias diluído em 12 meses
+            const monthlyAvg13thAndVac = (net13th + netVacationBonus) / 12;
+
+            // FGTS (8% sobre bruto + 13º + 1/3 férias -> ~8,89% ao mês se incluir 13º/férias, ou 8% base)
+            const fgtsMonthly = state.includeFgts
+                ? (state.include13thVacation ? (grossSalary * 0.08 * (13.3333 / 12)) : (grossSalary * 0.08))
+                : 0;
+
+            // PLR / Bônus anual diluído em 12 meses
+            const plrMonthlyAvg = state.cltPlr / 12;
+
+            // Total mensal equivalente e anual
+            const equivalentNetMonthly = directNetMonthly + monthlyBenefits + monthlyAvg13thAndVac + fgtsMonthly + plrMonthlyAvg;
+            const equivalentNetYearly = equivalentNetMonthly * 12;
+
+            // Pacote Bruto Total CLT (para visualização proporcional no gráfico)
+            const totalGrossPackageMonthly = grossSalary + monthlyBenefits + (state.include13thVacation ? (grossSalary * 1.3333 / 12) : 0) + fgtsMonthly + plrMonthlyAvg;
+
+            return {
+                grossMonthly: grossSalary,
+                inssTax,
+                irrfTax,
+                totalTaxes: inssTax + irrfTax,
+                directNetMonthly,
+                monthlyBenefits,
+                monthlyAvg13thAndVac,
+                fgtsMonthly,
+                plrMonthlyAvg,
+                equivalentNetMonthly,
+                equivalentNetYearly,
+                totalGrossPackageMonthly,
+                effectiveTaxPercent: grossSalary > 0 ? ((inssTax + irrfTax) / grossSalary) * 100 : 0
+            };
+        }
+
+        // 6. Solver Numérico (Busca Binária) para Encontrar Salário CLT Equivalente ao PJ
+        function solveEquivalentClt(targetNetMonthly, state) {
+            if (targetNetMonthly <= 0) return 0;
+            let low = 0;
+            let high = Math.max(10000, targetNetMonthly * 3);
+            let mid = 0;
+
+            for (let i = 0; i < 60; i++) {
+                mid = (low + high) / 2;
+                const clt = calculateCltDetails(mid, state);
+                if (clt.equivalentNetMonthly < targetNetMonthly) {
+                    low = mid;
+                } else {
+                    high = mid;
+                }
+            }
+            return Math.round(mid * 100) / 100;
+        }
+
+        // 7. Solver Numérico (Busca Binária) para Encontrar Faturamento PJ Equivalente ao CLT
+        function solveEquivalentPj(targetNetMonthly, state) {
+            if (targetNetMonthly <= 0) return 0;
+            let low = 0;
+            let high = Math.max(10000, targetNetMonthly * 3);
+            let mid = 0;
+
+            for (let i = 0; i < 60; i++) {
+                mid = (low + high) / 2;
+                const pj = calculatePjDetails(mid, state);
+                if (pj.netMonthly < targetNetMonthly) {
+                    low = mid;
+                } else {
+                    high = mid;
+                }
+            }
+            return Math.round(mid * 100) / 100;
+        }
+
+        /**
+         * ATUALIZAÇÃO DA INTERFACE E RENDERIZAÇÃO
+         */
+        function updateCalculationsAndUI() {
+            let pjResult, cltResult;
+
+            if (appState.mode === 'PJ_TO_CLT') {
+                // Usuário informou PJ -> Descobre CLT equivalente
+                pjResult = calculatePjDetails(appState.mainSalary, appState);
+                const equivalentCltGross = solveEquivalentClt(pjResult.netMonthly, appState);
+                cltResult = calculateCltDetails(equivalentCltGross, appState);
+
+                // Atualiza pró-labore input se estiver em modo automático
+                if (appState.proLaboreMode !== 'MANUAL') {
+                    document.getElementById('proLaboreInput').value = formatNumberInput(pjResult.proLabore);
+                }
+            } else {
+                // Usuário informou CLT -> Descobre PJ equivalente
+                cltResult = calculateCltDetails(appState.mainSalary, appState);
+                const equivalentPjGross = solveEquivalentPj(cltResult.equivalentNetMonthly, appState);
+                pjResult = calculatePjDetails(equivalentPjGross, appState);
+
+                if (appState.proLaboreMode !== 'MANUAL') {
+                    document.getElementById('proLaboreInput').value = formatNumberInput(pjResult.proLabore);
+                }
+            }
+
+            appState.lastCalculation = { pj: pjResult, clt: cltResult };
+
+            // 1. Atualiza Banner Principal (Hero)
+            const ratio = cltResult.grossMonthly > 0 ? (pjResult.grossMonthly / cltResult.grossMonthly) : 0;
+            document.getElementById('multiplierBadge').textContent = `Relação PJ / CLT: ${ratio.toFixed(2).replace('.', ',')}x`;
+
+            if (appState.mode === 'PJ_TO_CLT') {
+                document.getElementById('heroSourceLabel').textContent = 'Proposta PJ Informada (Bruto)';
+                document.getElementById('heroSourceValue').textContent = formatBRL(pjResult.grossMonthly);
+                document.getElementById('heroSourceSub').innerHTML = `Líquido mensal PJ: <strong class="text-white">${formatBRL(pjResult.netMonthly)}</strong>`;
+
+                document.getElementById('heroTargetLabel').textContent = 'Salário Bruto CLT Equivalente';
+                document.getElementById('heroTargetValue').textContent = formatBRL(cltResult.grossMonthly);
+                document.getElementById('heroTargetSub').textContent = `Salário líquido no holerite: ${formatBRL(cltResult.directNetMonthly)} + benefícios/direitos`;
+
+                document.getElementById('heroInsightText').innerHTML = `Para igualar o ganho líquido anual de <strong>${formatBRL(pjResult.netYearly)}</strong> desta proposta PJ, você precisaria de um salário CLT de <strong>${formatBRL(cltResult.grossMonthly)}</strong> (considerando seus benefícios e direitos trabalhistas).`;
+            } else {
+                document.getElementById('heroSourceLabel').textContent = 'Salário Bruto CLT Informado';
+                document.getElementById('heroSourceValue').textContent = formatBRL(cltResult.grossMonthly);
+                document.getElementById('heroSourceSub').innerHTML = `Pacote líquido mensal CLT: <strong class="text-white">${formatBRL(cltResult.equivalentNetMonthly)}</strong>`;
+
+                document.getElementById('heroTargetLabel').textContent = 'Faturamento PJ Equivalente';
+                document.getElementById('heroTargetValue').textContent = formatBRL(pjResult.grossMonthly);
+                document.getElementById('heroTargetSub').textContent = `Você precisa cobrar ${((ratio - 1) * 100).toFixed(0)}% acima do bruto CLT para empatar`;
+
+                document.getElementById('heroInsightText').innerHTML = `Para substituir seu pacote CLT atual (que gera <strong>${formatBRL(cltResult.equivalentNetYearly)}/ano</strong> em líquido, benefícios e direitos), sua nota fiscal PJ deve ser de pelo menos <strong>${formatBRL(pjResult.grossMonthly)}/mês</strong>.`;
+            }
+
+            // 2. Atualiza os 3 Cards de Resumo
+            document.getElementById('pjEffectiveTaxBadge').textContent = `${pjResult.effectiveTaxPercent.toFixed(1).replace('.', ',')}%`;
+            document.getElementById('cardPjTaxes').textContent = formatBRL(pjResult.totalTaxes);
+
+            document.getElementById('cltEffectiveTaxBadge').textContent = `${cltResult.effectiveTaxPercent.toFixed(1).replace('.', ',')}%`;
+            document.getElementById('cardCltTaxes').textContent = formatBRL(cltResult.totalTaxes);
+
+            document.getElementById('cardNetMonthly').textContent = formatBRL(pjResult.netMonthly);
+
+            // 3. Atualiza Gráfico Visual de Composição
+            updateCompositionBars(pjResult, cltResult);
+
+            // 4. Atualiza Tabela Detalhada
+            document.getElementById('tblPjGross').textContent = formatBRL(pjResult.grossMonthly);
+            document.getElementById('tblCltGross').textContent = formatBRL(cltResult.grossMonthly);
+
+            document.getElementById('tblPjDasRate').textContent = `Alíquota efetiva: ${(pjResult.dasRate * 100).toFixed(2).replace('.', ',')}%`;
+            document.getElementById('tblPjDas').textContent = `- ${formatBRL(pjResult.dasTax)}`;
+
+            document.getElementById('tblPjInss').textContent = `- ${formatBRL(pjResult.inssTax)}`;
+            document.getElementById('tblCltInss').textContent = `- ${formatBRL(cltResult.inssTax)}`;
+
+            document.getElementById('tblPjIrrf').textContent = `- ${formatBRL(pjResult.irrfTax)}`;
+            document.getElementById('tblCltIrrf').textContent = `- ${formatBRL(cltResult.irrfTax)}`;
+
+            document.getElementById('tblPjCosts').textContent = `- ${formatBRL(pjResult.costs)}`;
+
+            document.getElementById('tblPjDirectNet').textContent = formatBRL(pjResult.netMonthly);
+            document.getElementById('tblCltDirectNet').textContent = formatBRL(cltResult.directNetMonthly);
+
+            document.getElementById('tblCltBenefits').textContent = `+ ${formatBRL(cltResult.monthlyBenefits)}`;
+            document.getElementById('tblClt13thVac').textContent = `+ ${formatBRL(cltResult.monthlyAvg13thAndVac)}`;
+            document.getElementById('tblCltFgtsPlr').textContent = `+ ${formatBRL(cltResult.fgtsMonthly + cltResult.plrMonthlyAvg)}`;
+
+            document.getElementById('tblPjFinalMonthly').textContent = formatBRL(pjResult.netMonthly);
+            document.getElementById('tblCltFinalMonthly').textContent = formatBRL(cltResult.equivalentNetMonthly);
+
+            document.getElementById('tblPjFinalYearly').textContent = formatBRL(pjResult.netYearly);
+            document.getElementById('tblCltFinalYearly').textContent = formatBRL(cltResult.equivalentNetYearly);
+        }
+
+        function updateCompositionBars(pj, clt) {
+            // PJ Bar
+            const pjTotal = Math.max(1, pj.grossMonthly);
+            const pjNetPct = Math.min(100, Math.max(0, (pj.netMonthly / pjTotal) * 100));
+            const pjTaxPct = Math.max(0, 100 - pjNetPct);
+
+            document.getElementById('chartPjTotalLabel').textContent = formatBRL(pj.grossMonthly);
+            document.getElementById('chartPjNetPct').textContent = `${pjNetPct.toFixed(1).replace('.', ',')}% líquido`;
+
+            const barPjNet = document.getElementById('barPjNet');
+            const barPjTax = document.getElementById('barPjTax');
+            barPjNet.style.width = `${pjNetPct}%`;
+            barPjNet.textContent = pjNetPct > 15 ? `${pjNetPct.toFixed(0)}%` : '';
+            barPjTax.style.width = `${pjTaxPct}%`;
+            barPjTax.textContent = pjTaxPct > 10 ? `${pjTaxPct.toFixed(0)}%` : '';
+
+            // CLT Bar
+            const cltTotal = Math.max(1, clt.totalGrossPackageMonthly);
+            const cltDirectPct = (clt.directNetMonthly / cltTotal) * 100;
+            const cltBenefitsAndRights = clt.monthlyBenefits + clt.monthlyAvg13thAndVac + clt.fgtsMonthly + clt.plrMonthlyAvg;
+            const cltBenPct = (cltBenefitsAndRights / cltTotal) * 100;
+            const cltTaxPct = Math.max(0, 100 - cltDirectPct - cltBenPct);
+
+            document.getElementById('chartCltTotalLabel').textContent = formatBRL(clt.totalGrossPackageMonthly);
+            document.getElementById('chartCltNetPct').textContent = `${(cltDirectPct + cltBenPct).toFixed(1).replace('.', ',')}% líquido + benef.`;
+
+            const barCltNet = document.getElementById('barCltNet');
+            const barCltBenefits = document.getElementById('barCltBenefits');
+            const barCltTax = document.getElementById('barCltTax');
+
+            barCltNet.style.width = `${cltDirectPct}%`;
+            barCltNet.textContent = cltDirectPct > 15 ? `${cltDirectPct.toFixed(0)}%` : '';
+
+            barCltBenefits.style.width = `${cltBenPct}%`;
+            barCltBenefits.textContent = cltBenPct > 12 ? `${cltBenPct.toFixed(0)}%` : '';
+
+            barCltTax.style.width = `${cltTaxPct}%`;
+            barCltTax.textContent = cltTaxPct > 10 ? `${cltTaxPct.toFixed(0)}%` : '';
+        }
+
+        /**
+         * CONTROLES DE INTERAÇÃO DO USUÁRIO
+         */
+        function setMode(newMode) {
+            appState.mode = newMode;
+            const tabPj = document.getElementById('tabPjToClt');
+            const tabClt = document.getElementById('tabCltToPj');
+            const titleEl = document.getElementById('primaryInputTitle');
+            const labelEl = document.getElementById('primaryInputLabel');
+            const inputEl = document.getElementById('mainSalaryInput');
+
+            if (newMode === 'PJ_TO_CLT') {
+                tabPj.classList.add('tab-active');
+                tabPj.classList.remove('tab-inactive');
+                tabClt.classList.remove('tab-active');
+                tabClt.classList.add('tab-inactive');
+
+                titleEl.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span> Proposta PJ (Faturamento)`;
+                labelEl.textContent = 'Faturamento Mensal Bruto PJ (Nota Fiscal)';
+                inputEl.classList.remove('border-emerald-300', 'focus:border-emerald-600');
+                inputEl.classList.add('border-indigo-200', 'focus:border-indigo-600');
+            } else {
+                tabClt.classList.add('tab-active');
+                tabClt.classList.remove('tab-inactive');
+                tabPj.classList.remove('tab-active');
+                tabPj.classList.add('tab-inactive');
+
+                titleEl.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Salário Atual CLT (Bruto)`;
+                labelEl.textContent = 'Salário Bruto Mensal na Carteira (CLT)';
+                inputEl.classList.remove('border-indigo-200', 'focus:border-indigo-600');
+                inputEl.classList.add('border-emerald-300', 'focus:border-emerald-600');
+            }
+
+            updateCalculationsAndUI();
+        }
+
+        function setMainSalary(value) {
+            appState.mainSalary = value;
+            document.getElementById('mainSalaryInput').value = formatNumberInput(value);
+            updateCalculationsAndUI();
+        }
+
+        function setProLaboreMinimo() {
+            appState.proLaboreMode = 'MINIMO';
+            appState.proLabore = TAX_CONSTANTS.SALARIO_MINIMO;
+            document.getElementById('proLaboreHint').textContent = 'Mínimo Legal';
+            updateCalculationsAndUI();
+        }
+
+        function setProLaboreFatorR() {
+            appState.proLaboreMode = 'FATOR_R';
+            document.getElementById('proLaboreHint').textContent = '28% p/ Fator R';
+            updateCalculationsAndUI();
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastMessage').textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function copySummaryToClipboard() {
+            if (!appState.lastCalculation) return;
+            const { pj, clt } = appState.lastCalculation;
+            const text = [
+                `📊 COMPARATIVO PJ x CLT (Simulador Tributário)`,
+                `----------------------------------------`,
+                `💼 Proposta PJ Bruta: ${formatBRL(pj.grossMonthly)}/mês`,
+                `   • Impostos PJ (DAS + INSS + IRRF): -${formatBRL(pj.totalTaxes)} (${pj.effectiveTaxPercent.toFixed(1)}%)`,
+                `   • Líquido PJ Mensal: ${formatBRL(pj.netMonthly)}`,
+                ``,
+                `👔 Salário CLT Equivalente: ${formatBRL(clt.grossMonthly)}/mês`,
+                `   • Líquido Holerite: ${formatBRL(clt.directNetMonthly)}`,
+                `   • Benefícios Mensais: +${formatBRL(clt.monthlyBenefits)}`,
+                `   • 13º + 1/3 Férias + FGTS (média/mês): +${formatBRL(clt.monthlyAvg13thAndVac + clt.fgtsMonthly)}`,
+                `   • Pacote Líquido Mensal CLT: ${formatBRL(clt.equivalentNetMonthly)}`,
+                `----------------------------------------`,
+                `📅 Pacote Anual Equiparado: ${formatBRL(pj.netYearly)}/ano`
+            ].join('\n');
+
+            // Fallback seguro compatível com iframe usando textarea temporária e execCommand('copy')
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Resumo da comparação copiado!');
+            } catch (err) {
+                showToast('Não foi possível copiar automaticamente.');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function resetDefaults() {
+            appState = {
+                mode: 'PJ_TO_CLT',
+                mainSalary: 12000.00,
+                pjRegime: 'ANEXO_III_FATOR_R',
+                customTaxRate: 8.5,
+                proLabore: 3360.00,
+                proLaboreMode: 'FATOR_R',
+                pjCosts: 350.00,
+                cltVr: 900.00,
+                cltHealth: 550.00,
+                cltOtherBenefits: 200.00,
+                cltPlr: 0.00,
+                dependents: 0,
+                include13thVacation: true,
+                includeFgts: true,
+                lastCalculation: null
+            };
+
+            document.getElementById('mainSalaryInput').value = formatNumberInput(appState.mainSalary);
+            document.getElementById('pjRegime').value = appState.pjRegime;
+            document.getElementById('customTaxContainer').classList.add('hidden');
+            document.getElementById('customTaxRate').value = appState.customTaxRate;
+            document.getElementById('proLaboreHint').textContent = '28% p/ Fator R';
+            document.getElementById('pjCostsInput').value = formatNumberInput(appState.pjCosts);
+            document.getElementById('cltVrInput').value = formatNumberInput(appState.cltVr);
+            document.getElementById('cltHealthInput').value = formatNumberInput(appState.cltHealth);
+            document.getElementById('cltOtherBenefitsInput').value = formatNumberInput(appState.cltOtherBenefits);
+            document.getElementById('cltPlrInput').value = formatNumberInput(appState.cltPlr);
+            document.getElementById('dependentsInput').value = '0';
+            document.getElementById('include13thVacation').checked = true;
+            document.getElementById('includeFgts').checked = true;
+
+            setMode('PJ_TO_CLT');
+            showToast('Valores restaurados para o padrão.');
+        }
+
+        /**
+         * INICIALIZAÇÃO E LISTENERS
+         */
+        window.addEventListener('DOMContentLoaded', () => {
+            // Máscaras de Moeda
+            attachCurrencyMask(document.getElementById('mainSalaryInput'), (val) => {
+                appState.mainSalary = val;
+                updateCalculationsAndUI();
+            });
+
+            attachCurrencyMask(document.getElementById('proLaboreInput'), (val) => {
+                appState.proLaboreMode = 'MANUAL';
+                appState.proLabore = val;
+                document.getElementById('proLaboreHint').textContent = 'Valor Manual';
+                updateCalculationsAndUI();
+            });
+
+            attachCurrencyMask(document.getElementById('pjCostsInput'), (val) => {
+                appState.pjCosts = val;
+                updateCalculationsAndUI();
+            });
+
+            attachCurrencyMask(document.getElementById('cltVrInput'), (val) => {
+                appState.cltVr = val;
+                updateCalculationsAndUI();
+            });
+
+            attachCurrencyMask(document.getElementById('cltHealthInput'), (val) => {
+                appState.cltHealth = val;
+                updateCalculationsAndUI();
+            });
+
+            attachCurrencyMask(document.getElementById('cltOtherBenefitsInput'), (val) => {
+                appState.cltOtherBenefits = val;
+                updateCalculationsAndUI();
+            });
+
+            attachCurrencyMask(document.getElementById('cltPlrInput'), (val) => {
+                appState.cltPlr = val;
+                updateCalculationsAndUI();
+            });
+
+            // Regime PJ Select
+            document.getElementById('pjRegime').addEventListener('change', (e) => {
+                appState.pjRegime = e.target.value;
+                const customBox = document.getElementById('customTaxContainer');
+                if (appState.pjRegime === 'CUSTOM') {
+                    customBox.classList.remove('hidden');
+                } else {
+                    customBox.classList.add('hidden');
+                }
+
+                // Sugere automaticamente pró-labore ideal conforme o anexo
+                if (appState.pjRegime === 'ANEXO_III_FATOR_R') {
+                    setProLaboreFatorR();
+                } else if (appState.pjRegime === 'ANEXO_III_PURO' || appState.pjRegime === 'ANEXO_V') {
+                    setProLaboreMinimo();
+                } else {
+                    updateCalculationsAndUI();
+                }
+            });
+
+            // Custom Tax Rate Input
+            document.getElementById('customTaxRate').addEventListener('input', (e) => {
+                appState.customTaxRate = parseFloat(e.target.value) || 0;
+                updateCalculationsAndUI();
+            });
+
+            // Dependents Select
+            document.getElementById('dependentsInput').addEventListener('change', (e) => {
+                appState.dependents = parseInt(e.target.value, 10) || 0;
+                updateCalculationsAndUI();
+            });
+
+            // Checkboxes
+            document.getElementById('include13thVacation').addEventListener('change', (e) => {
+                appState.include13thVacation = e.target.checked;
+                updateCalculationsAndUI();
+            });
+
+            document.getElementById('includeFgts').addEventListener('change', (e) => {
+                appState.includeFgts = e.target.checked;
+                updateCalculationsAndUI();
+            });
+
+            // Reset Button
+            document.getElementById('btnReset').addEventListener('click', resetDefaults);
+
+            // Executa cálculo inicial
+            updateCalculationsAndUI();
+        });
+    </script>
+</body>
+</html>
